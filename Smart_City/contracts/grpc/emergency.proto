@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package smartcity.emergency;
+
+option go_package = "github.com/smartcity/urban-platform/services/emergency-grpc/gen";
+option java_multiple_files = true;
+option java_package = "com.smartcity.emergency";
+
+message Alert {
+  string id = 1;
+  string type = 2;
+  string zone = 3;
+  string description = 4;
+  int64 timestamp = 5;
+  Severity severity = 6;
+}
+
+enum Severity {
+  SEVERITY_UNSPECIFIED = 0;
+  SEVERITY_INFO = 1;
+  SEVERITY_WARNING = 2;
+  SEVERITY_CRITICAL = 3;
+}
+
+message AlertFilter {
+  repeated string types = 1;
+  repeated string zones = 2;
+  Severity minimum_severity = 3;
+}
+
+message AlertAck {
+  string alert_id = 1;
+  bool accepted = 2;
+}
+
+message RecentRequest {
+  int32 limit = 1;
+  AlertFilter filter = 2;
+}
+
+message AlertList {
+  repeated Alert alerts = 1;
+}
+
+service EmergencyService {
+  rpc SendAlert(Alert) returns (AlertAck);
+  rpc SubscribeAlerts(AlertFilter) returns (stream Alert);
+  rpc GetRecentAlerts(RecentRequest) returns (AlertList);
+}

@@ -1,0 +1,136 @@
+services:
+  postgres-mobility:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: mobility
+      POSTGRES_PASSWORD: mobility
+      POSTGRES_DB: mobility
+    volumes:
+      - pg_mobility_data:/var/lib/postgresql/data
+    networks: [backend]
+
+  postgres-directory:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: directory
+      POSTGRES_PASSWORD: directory
+      POSTGRES_DB: directory
+    volumes:
+      - pg_directory_data:/var/lib/postgresql/data
+    networks: [backend]
+
+  postgres-emergency:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: emergency
+      POSTGRES_PASSWORD: emergency
+      POSTGRES_DB: emergency
+    volumes:
+      - pg_emergency_data:/var/lib/postgresql/data
+    networks: [backend]
+
+  mobility-rest:
+    build:
+      context: .
+      dockerfile: ./services/mobility-rest/Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-mobility:5432/mobility
+      SPRING_DATASOURCE_USERNAME: mobility
+      SPRING_DATASOURCE_PASSWORD: mobility
+    depends_on:
+      - postgres-mobility
+    networks: [backend]
+
+  airquality-soap:
+    build: ./services/airquality-soap
+    networks: [backend]
+
+  emergency-service:
+    build:
+      context: .
+      dockerfile: ./services/emergency-grpc/Dockerfile
+    environment:
+      EMERGENCY_DB_URL: jdbc:postgresql://postgres-emergency:5432/emergency
+      EMERGENCY_DB_USERNAME: emergency
+      EMERGENCY_DB_PASSWORD: emergency
+      GRPC_PORT: 50051
+      MANAGEMENT_HTTP_PORT: 9090
+    depends_on:
+      - postgres-emergency
+    networks: [backend]
+
+  redis-cache:
+    image: redis:7-alpine
+    networks: [backend]
+
+  directory-service:
+    build:
+      context: .
+      dockerfile: ./services/directory-graphql/Dockerfile
+    environment:
+      PORT: 8082
+      DIRECTORY_DB_URL: jdbc:postgresql://postgres-directory:5432/directory
+      DIRECTORY_DB_USERNAME: directory
+      DIRECTORY_DB_PASSWORD: directory
+    depends_on:
+      - postgres-directory
+    networks: [backend]
+
+  smartflow:
+    build: ./orchestrator/smartflow
+    environment:
+      PORT: 7000
+      MOBILITY_BASE_URL: http://mobility-rest:8080/mobility/api
+      AIRQUALITY_SOAP_URL: http://airquality-soap:8081/airquality
+      EMERGENCY_GRPC_URL: emergency-service:50051
+      REDIS_URL: redis://redis-cache:6379
+    networks: [backend]
+    depends_on:
+      - mobility-rest
+      - airquality-soap
+      - emergency-service
+      - redis-cache
+
+  kong:
+    image: kong:3.5
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
+      KONG_LOG_LEVEL: info
+      KONG_PROXY_LISTEN: 0.0.0.0:8000, 0.0.0.0:8443 ssl
+      KONG_SSL_CERT: /etc/kong/certs/server.crt
+      KONG_SSL_CERT_KEY: /etc/kong/certs/server.key
+    volumes:
+      - ./gateway/kong/kong.yml:/etc/kong/kong.yml:ro
+      - ./gateway/certs:/etc/kong/certs:ro
+    ports:
+      - "8000:8000"
+      - "8443:8443"
+    depends_on:
+      - mobility-rest
+      - airquality-soap
+      - emergency-service
+      - directory-service
+      - smartflow
+    networks:
+      - backend
+      - frontend
+
+  web-dashboard:
+    build: ./client/web-dashboard
+    environment:
+      VITE_GATEWAY_URL: http://kong:8000
+    depends_on:
+      - kong
+    ports:
+      - "4173:4173"
+    networks: [frontend]
+
+volumes:
+  pg_mobility_data:
+  pg_directory_data:
+  pg_emergency_data:
+
+networks:
+  frontend:
+  backend:

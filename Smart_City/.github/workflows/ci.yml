@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  smartflow-and-client:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            orchestrator/smartflow/package-lock.json
+            client/web-dashboard/package-lock.json
+      - name: Install SmartFlow deps
+        working-directory: orchestrator/smartflow
+        run: npm install
+      - name: Run SmartFlow tests
+        working-directory: orchestrator/smartflow
+        run: npm test
+      - name: Build web dashboard
+        working-directory: client/web-dashboard
+        run: |
+          npm install
+          npm run build
+      - name: Playwright smoke tests (optional)
+        working-directory: client/web-dashboard
+        env:
+          RUN_E2E: '0'
+        run: npm run test:e2e
+
+  spring-services:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Run Maven tests for Spring services
+        run: mvn -B -pl services/directory-graphql,services/emergency-grpc -am test

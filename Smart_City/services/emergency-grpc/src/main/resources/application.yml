@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: emergency-service
+  datasource:
+    url: ${EMERGENCY_DB_URL:jdbc:postgresql://localhost:5435/emergency}
+    username: ${EMERGENCY_DB_USERNAME:emergency}
+    password: ${EMERGENCY_DB_PASSWORD:emergency}
+    driver-class-name: org.postgresql.Driver
+  jdbc:
+    template:
+      fetch-size: 200
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+server:
+  port: ${MANAGEMENT_HTTP_PORT:9090}
+
+grpc:
+  server:
+    port: ${GRPC_PORT:50051}
+    security:
+      enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  tracing:
+    sampling:
+      probability: 1.0
+
+emergency:
+  simulator:
+    enabled: ${EMERGENCY_SIMULATOR_ENABLED:true}
+    period-ms: ${EMERGENCY_SIMULATOR_PERIOD_MS:10000}
+    initial-delay-ms: ${EMERGENCY_SIMULATOR_INITIAL_DELAY_MS:5000}

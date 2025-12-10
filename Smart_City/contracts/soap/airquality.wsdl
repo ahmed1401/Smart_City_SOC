@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://schemas.xmlsoap.org/wsdl/" 
+             xmlns:tns="http://smartcity.example.com/airquality"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+             targetNamespace="http://smartcity.example.com/airquality">
+  <types>
+    <xsd:schema targetNamespace="http://smartcity.example.com/airquality">
+      <xsd:complexType name="ZoneRequest">
+        <xsd:sequence>
+          <xsd:element name="zoneCode" type="xsd:string" />
+        </xsd:sequence>
+      </xsd:complexType>
+      <xsd:complexType name="AQIReport">
+        <xsd:sequence>
+          <xsd:element name="zoneCode" type="xsd:string" />
+          <xsd:element name="value" type="xsd:int" />
+          <xsd:element name="category" type="xsd:string" />
+          <xsd:element name="trend" type="xsd:string" />
+          <xsd:element name="recommendation" type="xsd:string" />
+        </xsd:sequence>
+      </xsd:complexType>
+      <xsd:complexType name="PollutantLevel">
+        <xsd:sequence>
+          <xsd:element name="name" type="xsd:string" />
+          <xsd:element name="value" type="xsd:decimal" />
+          <xsd:element name="unit" type="xsd:string" />
+        </xsd:sequence>
+      </xsd:complexType>
+      <xsd:complexType name="PollutantResponse">
+        <xsd:sequence>
+          <xsd:element name="zoneCode" type="xsd:string" />
+          <xsd:element name="pollutants" type="tns:PollutantLevel" minOccurs="0" maxOccurs="unbounded" />
+        </xsd:sequence>
+      </xsd:complexType>
+      <xsd:complexType name="CompareZonesRequest">
+        <xsd:sequence>
+          <xsd:element name="zoneA" type="xsd:string" />
+          <xsd:element name="zoneB" type="xsd:string" />
+        </xsd:sequence>
+      </xsd:complexType>
+      <xsd:complexType name="ComparisonResult">
+        <xsd:sequence>
+          <xsd:element name="deltaAQI" type="xsd:int" />
+          <xsd:element name="higherZone" type="xsd:string" />
+          <xsd:element name="dominantPollutant" type="xsd:string" />
+        </xsd:sequence>
+      </xsd:complexType>
+    </xsd:schema>
+  </types>
+
+  <message name="GetAQIRequest">
+    <part name="parameters" element="tns:ZoneRequest" />
+  </message>
+  <message name="GetAQIResponse">
+    <part name="parameters" element="tns:AQIReport" />
+  </message>
+
+  <message name="GetPollutantsRequest">
+    <part name="parameters" element="tns:ZoneRequest" />
+  </message>
+  <message name="GetPollutantsResponse">
+    <part name="parameters" element="tns:PollutantResponse" />
+  </message>
+
+  <message name="CompareZonesRequest">
+    <part name="parameters" element="tns:CompareZonesRequest" />
+  </message>
+  <message name="CompareZonesResponse">
+    <part name="parameters" element="tns:ComparisonResult" />
+  </message>
+
+  <portType name="AirQualityPortType">
+    <operation name="GetAQI">
+      <input message="tns:GetAQIRequest" />
+      <output message="tns:GetAQIResponse" />
+    </operation>
+    <operation name="GetPollutants">
+      <input message="tns:GetPollutantsRequest" />
+      <output message="tns:GetPollutantsResponse" />
+    </operation>
+    <operation name="CompareZones">
+      <input message="tns:CompareZonesRequest" />
+      <output message="tns:CompareZonesResponse" />
+    </operation>
+  </portType>
+
+  <binding name="AirQualitySoapBinding" type="tns:AirQualityPortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http" />
+    <operation name="GetAQI">
+      <soap:operation soapAction="GetAQI" />
+      <input>
+        <soap:body use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+      </output>
+    </operation>
+    <operation name="GetPollutants">
+      <soap:operation soapAction="GetPollutants" />
+      <input>
+        <soap:body use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+      </output>
+    </operation>
+    <operation name="CompareZones">
+      <soap:operation soapAction="CompareZones" />
+      <input>
+        <soap:body use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+      </output>
+    </operation>
+  </binding>
+
+  <service name="AirQualityService">
+    <documentation>Service SOAP fournissant les indicateurs de qualité de l'air.</documentation>
+    <port name="AirQualityPort" binding="tns:AirQualitySoapBinding">
+      <soap:address location="https://api.smartcity.local/airquality" />
+    </port>
+  </service>
+</definitions>

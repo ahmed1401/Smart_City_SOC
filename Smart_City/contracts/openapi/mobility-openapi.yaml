@@ -1,0 +1,220 @@
+openapi: 3.0.3
+info:
+  title: SmartCity Mobility API
+  version: 0.1.0
+  description: >
+    API REST pour la gestion des lignes, arrêts, horaires et réservations dans le cadre
+    de la plateforme de services urbains interopérables.
+servers:
+  - url: https://api.smartcity.local/mobility
+    description: Passerelle API
+  - url: http://mobility-rest:8080
+    description: Service interne (docker/dev)
+paths:
+  /lines:
+    get:
+      summary: Liste des lignes de transport
+      operationId: listLines
+      parameters:
+        - name: mode
+          in: query
+          schema:
+            type: string
+            enum: [bus, tram, metro, bike]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, disrupted, planned]
+      responses:
+        '200':
+          description: Lignes récupérées avec succès
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Line'
+  /lines/{lineId}:
+    get:
+      summary: Détails d'une ligne
+      operationId: getLine
+      parameters:
+        - $ref: '#/components/parameters/LineId'
+      responses:
+        '200':
+          description: Ligne trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Line'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /lines/{lineId}/schedule:
+    get:
+      summary: Horaires d'une ligne pour une date
+      operationId: getLineSchedule
+      parameters:
+        - $ref: '#/components/parameters/LineId'
+        - name: date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Horaires disponibles
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+  /stops/{stopId}/arrivals:
+    get:
+      summary: Prochains passages à un arrêt donné
+      operationId: getStopArrivals
+      parameters:
+        - $ref: '#/components/parameters/StopId'
+      responses:
+        '200':
+          description: Prochains passages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Arrival'
+  /bookings:
+    post:
+      summary: Réserver un trajet
+      operationId: createBooking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingInput'
+      responses:
+        '201':
+          description: Réservation créée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+
+components:
+  parameters:
+    LineId:
+      name: lineId
+      in: path
+      required: true
+      schema:
+        type: string
+    StopId:
+      name: stopId
+      in: path
+      required: true
+      schema:
+        type: string
+  responses:
+    NotFound:
+      description: Ressource introuvable
+  schemas:
+    Line:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        mode:
+          type: string
+        status:
+          type: string
+        stops:
+          type: array
+          items:
+            $ref: '#/components/schemas/Stop'
+    Stop:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        location:
+          $ref: '#/components/schemas/GeoPoint'
+    GeoPoint:
+      type: object
+      properties:
+        lat:
+          type: number
+          format: float
+        lng:
+          type: number
+          format: float
+    Schedule:
+      type: object
+      properties:
+        lineId:
+          type: string
+        date:
+          type: string
+          format: date
+        trips:
+          type: array
+          items:
+            $ref: '#/components/schemas/Trip'
+    Trip:
+      type: object
+      properties:
+        departure:
+          type: string
+          format: date-time
+        arrival:
+          type: string
+          format: date-time
+        stops:
+          type: array
+          items:
+            $ref: '#/components/schemas/StopTime'
+    StopTime:
+      type: object
+      properties:
+        stopId:
+          type: string
+        time:
+          type: string
+          format: date-time
+    Arrival:
+      type: object
+      properties:
+        lineId:
+          type: string
+        etaMinutes:
+          type: integer
+    BookingInput:
+      type: object
+      required: [lineId, stopFrom, stopTo, datetime]
+      properties:
+        lineId:
+          type: string
+        stopFrom:
+          type: string
+        stopTo:
+          type: string
+        datetime:
+          type: string
+          format: date-time
+        userId:
+          type: string
+    Booking:
+      allOf:
+        - $ref: '#/components/schemas/BookingInput'
+        - type: object
+          properties:
+            id:
+              type: string
+            status:
+              type: string
+              enum: [pending, confirmed, cancelled]

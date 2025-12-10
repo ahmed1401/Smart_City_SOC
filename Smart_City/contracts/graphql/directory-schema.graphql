@@ -1,0 +1,100 @@
+"""
+Schema GraphQL pour l'annuaire des services municipaux et la gestion de tickets
+au sein de la plateforme urbaine.
+"""
+
+type Service {
+  id: ID!
+  name: String!
+  category: String!
+  description: String
+  contact: ContactInfo!
+  hours: [OpeningHour!]!
+  location: Location!
+  relatedAQI: AQIInsight
+}
+
+type ContactInfo {
+  phone: String
+  email: String
+  url: String
+}
+
+type OpeningHour {
+  day: String!
+  open: String!
+  close: String!
+}
+
+type Location {
+  address: String
+  latitude: Float
+  longitude: Float
+}
+
+type AQIInsight {
+  zoneCode: String!
+  value: Int!
+  category: String!
+}
+
+type Ticket {
+  id: ID!
+  subject: String!
+  description: String
+  status: TicketStatus!
+  priority: TicketPriority!
+  createdAt: String!
+  updatedAt: String!
+  citizenId: String!
+  service: Service!
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+input ServiceFilter {
+  category: String
+  text: String
+  nearZone: String
+}
+
+input TicketFilter {
+  status: TicketStatus
+  serviceId: ID
+  citizenId: String
+}
+
+input TicketInput {
+  subject: String!
+  description: String!
+  serviceId: ID!
+  priority: TicketPriority = MEDIUM
+  citizenId: String!
+}
+
+type Query {
+  service(id: ID!): Service
+  services(filter: ServiceFilter): [Service!]!
+  tickets(filter: TicketFilter): [Ticket!]!
+}
+
+type Mutation {
+  createTicket(input: TicketInput!): Ticket!
+  closeTicket(id: ID!): Ticket!
+}
+
+schema {
+  query: Query
+  mutation: Mutation
+}

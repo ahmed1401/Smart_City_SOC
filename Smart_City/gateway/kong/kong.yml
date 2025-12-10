@@ -1,0 +1,104 @@
+_format_version: "3.0"
+_transform: true
+services:
+  - name: mobility
+    url: http://mobility-rest:8080/mobility/api
+    routes:
+      - name: mobility-api
+        paths:
+          - /api/mobility
+        strip_path: true
+  - name: airquality
+    url: http://airquality-soap:8081/airquality
+    routes:
+      - name: airquality-soap
+        paths:
+          - /api/airquality
+        strip_path: false
+  - name: emergency
+    url: http://emergency-service:50051
+    protocol: grpc
+    routes:
+      - name: emergency-grpc
+        protocols: [grpc, grpcs]
+        paths:
+          - /smartcity.emergency.EmergencyService
+  - name: directory
+    url: http://directory-service:8082/graphql
+    routes:
+      - name: directory-service-graphql
+        paths:
+          - /api/directory
+        strip_path: true
+  - name: smartflow
+    url: http://smartflow:7000
+    routes:
+      - name: smartflow-trip-plan
+        paths:
+          - /api/smartflow
+        strip_path: true
+consumers:
+  - username: citizen-app
+    custom_id: citizen
+    tags: [citizen]
+    keyauth_credentials:
+      - key: citizen-api-key
+    jwt_secrets:
+      - algorithm: HS256
+        key: citizen-app
+        secret: supersecretcitizen
+  - username: operator-app
+    custom_id: operator
+    tags: [operator]
+    keyauth_credentials:
+      - key: operator-api-key
+    jwt_secrets:
+      - algorithm: HS256
+        key: operator-app
+        secret: supersecretoperator
+plugins:
+  - name: rate-limiting
+    config:
+      minute: 60
+    enabled: true
+  - name: cors
+    config:
+      origins:
+        - http://localhost:4173
+      methods:
+        - GET
+        - POST
+        - PUT
+        - PATCH
+        - DELETE
+        - OPTIONS
+      headers:
+        - Authorization
+        - Content-Type
+        - x-api-key
+      exposed_headers:
+        - X-Request-ID
+      credentials: true
+      max_age: 3600
+  - name: key-auth
+    config:
+      key_names:
+        - x-api-key
+        - apikey
+      key_in_header: true
+      key_in_query: true
+      hide_credentials: true
+      run_on_preflight: false
+  - name: jwt
+    config:
+      key_claim_name: iss
+      claims_to_verify:
+        - exp
+      header_names:
+        - authorization
+      cookie_names:
+        - gateway_token
+      uri_param_names:
+        - jwt
+      maximum_expiration: 0
+      run_on_preflight: false

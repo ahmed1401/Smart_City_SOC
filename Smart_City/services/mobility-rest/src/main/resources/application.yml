@@ -1,0 +1,24 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /mobility
+spring:
+  application:
+    name: mobility-service
+  datasource:
+    url: jdbc:postgresql://postgres-mobility:5432/mobility
+    username: mobility
+    password: mobility
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+  jpa:
+    hibernate:
+      ddl-auto: none
+    defer-datasource-initialization: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
