@@ -1,0 +1,69 @@
+{
+  "info": {
+    "name": "Smart City Services",
+    "_postman_id": "smart-city-collection-001",
+    "description": "Test all Smart City API endpoints via Kong with required authentication.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "jwt", "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaXRpemVuLWFwcCIsImV4cCI6MTg5MzQ1NjAwMH0.OTeecNtCYb7hbOKxemMCYYzrQIzUxieFLfKaLdLeGuI" },
+    { "key": "api_key", "value": "citizen-api-key" }
+  ],
+  "item": [
+    {
+      "name": "Mobility - Get Lines",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{jwt}}" },
+          { "key": "x-api-key", "value": "{{api_key}}" }
+        ],
+        "url": { "raw": "http://localhost:8000/api/mobility/lines", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["api", "mobility", "lines"] }
+      }
+    },
+    {
+      "name": "Directory - GraphQL Query",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{jwt}}" },
+          { "key": "x-api-key", "value": "{{api_key}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"query\": \"{ services { id name } }\"\n}"
+        },
+        "url": { "raw": "http://localhost:8000/api/directory", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["api", "directory"] }
+      }
+    },
+
+    {
+      "name": "Smartflow - Trip Plan",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{jwt}}" },
+          { "key": "x-api-key", "value": "{{api_key}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"zoneCode\": \"CENTRE\",\n  \"preferredMode\": \"tram\"\n}"
+        },
+        "url": { "raw": "http://localhost:8000/api/smartflow/trip-plan", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["api", "smartflow", "trip-plan"] }
+      }
+    },
+    {
+      "name": "Smartflow - Metrics Overview",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{jwt}}" },
+          { "key": "x-api-key", "value": "{{api_key}}" }
+        ],
+        "url": { "raw": "http://localhost:8000/api/smartflow/metrics/overview", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["api", "smartflow", "metrics", "overview"] }
+      }
+    }
+  ]
+}
